@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ставки · Журнал</title>
+<style>
+  :root{
+    --bg:#18102d;
+    --card-bg:#1f1740;
+    --border:#2c2350;
+    --text:#f2f2f7;
+    --muted:#8a8a99;
+    --blue:#3ea6ff;
+    --blue-light:#1a2e42;
+    --purple:#b57dff;
+    --green:#2fe6a3;
+    --green-light:#16302a;
+    --orange:#ffb547;
+    --orange-light:#332615;
+    --red:#ff6b6b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  .header{margin-bottom:20px;}
+  .title{
+    font-size:28px;
+    font-weight:800;
+    letter-spacing:0.3px;
+    color:var(--text);
+  }
+  .subtitle{color:var(--muted);font-size:14px;margin-top:4px;}
+  .bank-row{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-top:18px;padding-bottom:18px;border-bottom:1px solid var(--border);
+  }
+  .bank-label{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+  .bank-value{font-size:34px;font-weight:800;color:var(--blue);}
+  .status{
+    margin-top:16px;padding:12px 14px;border-radius:10px;font-size:13px;
+    display:none;
+  }
+  .status.error{display:block;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.4);color:var(--red);}
+  .status.ok{display:block;background:rgba(47,230,163,0.1);border:1px solid rgba(47,230,163,0.4);color:var(--green);}
+  .grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;
+  }
+  .card{
+    background:var(--card-bg);border-radius:14px;padding:16px;border:1px solid var(--border);
+    box-shadow:0 1px 3px rgba(15,23,42,0.04);
+    border-top:3px solid var(--border);
+  }
+  .card.blue{border-top-color:var(--blue);}
+  .card.purple{border-top-color:var(--purple);}
+  .card.green{border-top-color:var(--green);}
+  .card.orange{border-top-color:var(--orange);}
+  .card-label{
+    display:flex;align-items:center;gap:6px;color:var(--muted);
+    font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;
+  }
+  .card-value{font-size:24px;font-weight:800;}
+  .card-value.blue{color:var(--blue);}
+  .card-value.purple{color:var(--purple);}
+  .card-value.green{color:var(--green);}
+  .card-value.orange{color:var(--orange);}
+  .card-sub{color:var(--muted);font-size:12px;margin-top:4px;}
+  .chart-box{
+    background:var(--card-bg);border-radius:14px;border:1px solid var(--border);
+    padding:16px;margin-top:16px;position:relative;
+    box-shadow:0 1px 3px rgba(15,23,42,0.04);
+  }
+  .chart-title{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+  svg{width:100%;height:auto;display:block;touch-action:none;}
+  .chart-tooltip{
+    position:absolute;
+    background:#1e1e30;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 12px;
+    font-size:14px;
+    color:var(--text);
+    white-space:nowrap;
+    pointer-events:none;
+    display:none;
+    transform:translate(-50%,-115%);
+    z-index:5;
+  }
+  .chart-tooltip .val{font-weight:700;color:var(--purple);}
+  .bank-input-row{
+    display:flex;align-items:center;gap:10px;margin-top:18px;color:var(--muted);font-size:14px;
+  }
+  input, select{
+    background:#181822;border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:12px;font-size:15px;width:100%;
+  }
+  input:focus, select:focus{outline:none;border-color:var(--blue);}
+  .bank-input-row input{width:130px;}
+  .form-box{
+    background:var(--card-bg);border-radius:14px;border:1px solid var(--border);
+    padding:16px;margin-top:20px;
+    box-shadow:0 1px 3px rgba(15,23,42,0.04);
+  }
+  .form-title{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .add-btn{
+    margin-top:12px;width:100%;border:none;border-radius:10px;padding:14px;
+    background:var(--blue);color:#fff8f0;font-weight:700;font-size:15px;
+    cursor:pointer;
+  }
+  .add-btn:disabled{opacity:0.6;}
+  .history-box{
+    background:var(--card-bg);border-radius:14px;border:1px solid var(--border);
+    padding:20px;margin-top:20px;
+    box-shadow:0 1px 3px rgba(15,23,42,0.04);
+  }
+  .history-title{color:var(--muted);font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;font-size:15px;}
+  th{color:var(--muted);text-align:left;font-weight:600;padding:10px 6px;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;}
+  td{padding:13px 6px;border-bottom:1px solid var(--border);}
+  .win{color:var(--green);}
+  .lose{color:var(--red);}
+  .empty{color:var(--muted);text-align:center;padding:24px 0;font-size:15px;}
+  .del-btn{
+    background:none;border:none;color:var(--muted);
+    cursor:pointer;font-size:18px;padding:0 6px;
+  }
+  .del-btn:hover{color:var(--red);}
+  .auth-corner{position:absolute;top:20px;right:16px;font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;}
+  .auth-box{
+    display:none;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;
+    padding:16px;margin-top:14px;
+  }
+  .auth-box.open{display:block;}
+  .auth-box input{margin-bottom:10px;}
+  .auth-btn{
+    width:100%;border:none;border-radius:10px;padding:12px;
+    background:var(--blue);color:#fff8f0;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .auth-me{font-size:12px;color:var(--muted);margin-top:8px;text-align:center;}
+  .auth-me a{color:var(--blue);cursor:pointer;text-decoration:underline;}
+  .locked-hint{color:var(--muted);font-size:13px;text-align:center;padding:14px;}
+
+  .nav-btn{
+    background:var(--card-bg);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;
+    box-shadow:0 1px 3px rgba(15,23,42,0.04);
+  }
+  .period-row{display:flex;gap:6px;margin-top:16px;}
+  .period-btn{
+    flex:1;background:var(--card-bg);border:1px solid var(--border);color:var(--muted);
+    border-radius:8px;padding:8px 4px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .period-btn.active{background:var(--blue);color:#fff8f0;border-color:var(--blue);}
+
+  .back-btn{
+    background:none;border:none;color:var(--blue);font-size:14px;font-weight:600;
+    cursor:pointer;padding:0;margin-bottom:14px;
+  }
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .month-nav button{
+    background:var(--card-bg);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;width:36px;height:36px;font-size:16px;cursor:pointer;
+  }
+  .month-nav .month-label{font-weight:700;font-size:16px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-size:11px;color:var(--muted);padding:4px 0;}
+  .cal-cell{
+    aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;font-size:10px;padding:2px;
+    background:#181822;border:1px solid var(--border);
+  }
+  .cal-cell.empty{background:transparent;border:none;}
+  .cal-cell .cal-day{font-size:11px;color:var(--muted);}
+  .cal-cell.win{background:var(--green-light);border-color:rgba(47,230,163,0.35);}
+  .cal-cell.lose{background:var(--orange-light);border-color:rgba(255,107,107,0.35);background:rgba(255,107,107,0.1);border-color:rgba(255,107,107,0.35);}
+  .cal-cell .cal-sum{font-size:10px;font-weight:700;margin-top:2px;text-align:center;line-height:1.1;}
+  .cal-cell.win .cal-sum{color:var(--green);}
+  .cal-cell.lose .cal-sum{color:var(--red);}
+
+  .streak-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+
+  .share-tabs{display:flex;gap:6px;margin-top:12px;}
+  .share-tab{
+    flex:1;background:#181822;border:1px solid var(--border);color:var(--muted);
+    border-radius:8px;padding:9px 4px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .share-tab.active{background:var(--blue);color:#fff8f0;border-color:var(--blue);}
+  .share-btn{
+    margin-top:14px;width:100%;border:none;border-radius:10px;padding:14px;
+    background:var(--blue);color:#fff8f0;font-weight:700;font-size:15px;cursor:pointer;
+  }
+  .share-preview{margin-top:14px;width:100%;border-radius:14px;display:none;border:1px solid var(--border);}
+  .share-actions{display:none;gap:10px;margin-top:10px;}
+  .share-actions button{
+    flex:1;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .share-actions .send-btn{background:var(--blue);color:#fff8f0;}
+  .share-actions .dl-btn{background:var(--card-bg);color:var(--text);border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header" style="position:relative;">
+    <span class="auth-corner" id="authCorner">Войти</span>
+    <div class="title">Ставки · Журнал</div>
+    <div class="subtitle">учёт ставок и банкролла</div>
+    <div class="bank-row">
+      <div class="bank-label">Текущий банк</div>
+      <div class="bank-value" id="bankValue">— ₽</div>
+    </div>
+    <div class="auth-box" id="authBox">
+      <input type="email" id="authEmail" placeholder="Email">
+      <input type="password" id="authPassword" placeholder="Пароль">
+      <button class="auth-btn" id="authSubmitBtn">Войти</button>
+      <div class="status" id="authStatus"></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <button class="nav-btn" id="calendarNavBtn">📅 Календарь прибыльности</button>
+  </div>
+
+  <div id="mainPage">
+
+  <div class="status" id="status"></div>
+
+  <div class="grid">
+    <div class="card blue">
+      <div class="card-label">🎯 Ставок</div>
+      <div class="card-value blue" id="statCount">0</div>
+      <div class="card-sub" id="statWL">0W / 0L</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">% Винрейт</div>
+      <div class="card-value purple" id="statWinrate">0.0%</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">↗ Профит</div>
+      <div class="card-value green" id="statProfit">0 ₽</div>
+    </div>
+    <div class="card orange">
+      <div class="card-label">% ROI</div>
+      <div class="card-value orange" id="statROI">0.0%</div>
+      <div class="card-sub" id="statAvgOdds">ср. кэф побед —</div>
+    </div>
+  </div>
+
+  <div class="period-row" id="periodRow">
+    <button class="period-btn" data-period="7d">7Д</button>
+    <button class="period-btn" data-period="1m">1М</button>
+    <button class="period-btn" data-period="3m">3М</button>
+    <button class="period-btn" data-period="1y">1Г</button>
+    <button class="period-btn active" data-period="all">Все</button>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">Динамика банка</div>
+    <svg id="chartSvg" viewBox="0 0 600 240" preserveAspectRatio="none"></svg>
+    <div class="chart-tooltip" id="chartTooltip">Банк: <span class="val" id="chartTooltipVal">—</span></div>
+  </div>
+
+  <div class="bank-input-row" id="bankInputRow" style="display:none;">
+    <span>Стартовый банк:</span>
+    <input type="number" id="startBank" value="0">
+    <span>₽</span>
+  </div>
+
+  <div class="form-box" id="formBox" style="display:none;">
+    <div class="form-title">Новая ставка</div>
+    <div class="form-grid">
+      <input type="date" id="fDate">
+      <input type="text" id="fEvent" placeholder="Спорт/событие">
+      <input type="number" id="fAmount" placeholder="Ставка ₽">
+      <input type="number" step="0.01" id="fOdds" placeholder="Кэф">
+      <select id="fResult" style="grid-column: span 2;">
+        <option value="win">Win</option>
+        <option value="lose">Lose</option>
+      </select>
+    </div>
+    <button class="add-btn" id="addBtn">+ Добавить</button>
+  </div>
+
+  <div class="history-box">
+    <div class="history-title" id="historyTitle">История (0)</div>
+    <table>
+      <thead>
+        <tr><th>Дата</th><th>Событие</th><th>Ставка</th><th>Кэф</th><th>Рез.</th><th>Профит</th><th></th></tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <div class="empty" id="emptyMsg">Пока нет ставок — добавьте первую выше</div>
+  </div>
+
+  </div>
+
+  <div id="calendarPage" style="display:none;">
+    <button class="back-btn" id="backBtn">← Назад</button>
+
+    <div class="card" style="border-top-color:var(--border);">
+      <div class="month-nav">
+        <button id="prevMonthBtn">‹</button>
+        <div class="month-label" id="monthLabel">—</div>
+        <button id="nextMonthBtn">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="streak-row">
+      <div class="card green">
+        <div class="card-label">🔥 Макс. серия побед</div>
+        <div class="card-value green" id="maxWinStreak">0</div>
+      </div>
+      <div class="card" style="border-top-color:var(--red);">
+        <div class="card-label" style="color:var(--muted);">❄️ Макс. серия поражений</div>
+        <div class="card-value" style="color:var(--red);" id="maxLoseStreak">0</div>
+      </div>
+    </div>
+
+    <div class="form-box" style="display:block;">
+      <div class="form-title">Поделиться результатом</div>
+      <div class="share-tabs">
+        <button class="share-tab active" data-mode="week">За неделю</button>
+        <button class="share-tab" data-mode="month">За месяц</button>
+        <button class="share-tab" data-mode="bet">За ставку</button>
+      </div>
+      <select id="shareBetSelect" style="margin-top:10px;display:none;"></select>
+      <button class="share-btn" id="generateCardBtn">Сформировать карточку</button>
+      <canvas id="shareCanvas" width="1080" height="1350" style="display:none;"></canvas>
+      <img id="sharePreview" class="share-preview">
+      <div class="share-actions" id="shareActions">
+        <button class="send-btn" id="shareSendBtn">📤 Поделиться</button>
+        <button class="dl-btn" id="shareDlBtn">Скачать</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://kjeqnanhkgvagywnjuef.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_bBXpmDwKNdYqUYVbPmRabQ_ysIKuazp";
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const STORAGE_KEY = "start_bank";
+  let bets = [];
+  let startBank = 0;
+  let isAuthed = false;
+  let currentPeriod = "all";
+  const today = new Date();
+  let calYear = today.getFullYear();
+  let calMonth = today.getMonth();
+  let shareMode = "week";
+
+  const $ = id => document.getElementById(id);
+  const statusEl = $("status");
+
+  function showStatus(msg, type){
+    statusEl.textContent = msg;
+    statusEl.className = "status " + type;
+    if(type === "ok"){
+      setTimeout(()=>{ statusEl.className = "status"; }, 2500);
+    }
+  }
+
+  function fmt(n){
+    return Math.round(n).toLocaleString("ru-RU");
+  }
+
+  async function loadStartBank(){
+    try{
+      const { data, error } = await supa
+        .from("settings")
+        .select("value")
+        .eq("key", STORAGE_KEY)
+        .maybeSingle();
+      if(error) throw error;
+      startBank = data ? Number(data.value) : 40000;
+    }catch(e){
+      startBank = 40000;
+    }
+    $("startBank").value = startBank;
+  }
+
+  async function saveStartBank(val){
+    startBank = Number(val) || 0;
+    try{
+      const { error } = await supa
+        .from("settings")
+        .upsert({ key: STORAGE_KEY, value: String(startBank) }, { onConflict: "key" });
+      if(error) throw error;
+      showStatus("Стартовый банк сохранён", "ok");
+    }catch(e){
+      showStatus("Ошибка сохранения банка: " + e.message, "error");
+    }
+    render();
+  }
+
+  async function loadBets(){
+    try{
+      const { data, error } = await supa
+        .from("bets")
+        .select("*")
+        .order("date", { ascending: true })
+        .order("created_at", { ascending: true });
+      if(error) throw error;
+      bets = data || [];
+    }catch(e){
+      showStatus("Ошибка загрузки ставок: " + e.message, "error");
+      bets = [];
+    }
+    render();
+  }
+
+  async function addBet(){
+    const date = $("fDate").value || new Date().toISOString().slice(0,10);
+    const event = $("fEvent").value.trim();
+    const amount = Number($("fAmount").value);
+    const odds = Number($("fOdds").value);
+    const result = $("fResult").value;
+
+    if(!amount || !odds){
+      showStatus("Заполните сумму ставки и коэффициент", "error");
+      return;
+    }
+
+    const profit = result === "win" ? Math.round(amount * (odds - 1)) : -amount;
+
+    const addBtn = $("addBtn");
+    addBtn.disabled = true;
+    try{
+      const { error } = await supa.from("bets").insert({
+        date, event, bet_amount: amount, odds, result, profit
+      });
+      if(error) throw error;
+      $("fEvent").value = "";
+      $("fAmount").value = "";
+      $("fOdds").value = "";
+      showStatus("Ставка добавлена", "ok");
+      await loadBets();
+    }catch(e){
+      showStatus("Ошибка сохранения ставки: " + e.message, "error");
+    }
+    addBtn.disabled = false;
+  }
+
+  async function deleteBet(id){
+    try{
+      const { error } = await supa.from("bets").delete().eq("id", id);
+      if(error) throw error;
+      await loadBets();
+    }catch(e){
+      showStatus("Ошибка удаления: " + e.message, "error");
+    }
+  }
+
+  function filterByPeriod(list, period){
+    if(period === "all") return list;
+    const now = new Date();
+    let cutoff = new Date(now);
+    if(period === "7d") cutoff.setDate(now.getDate() - 7);
+    else if(period === "1m") cutoff.setMonth(now.getMonth() - 1);
+    else if(period === "3m") cutoff.setMonth(now.getMonth() - 3);
+    else if(period === "1y") cutoff.setFullYear(now.getFullYear() - 1);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    return list.filter(b => b.date >= cutoffStr);
+  }
+
+  function render(){
+    const visibleBets = filterByPeriod(bets, currentPeriod);
+    const total = visibleBets.length;
+    const wins = visibleBets.filter(b => b.result === "win").length;
+    const loses = total - wins;
+    const winrate = total ? (wins/total*100) : 0;
+    const profit = visibleBets.reduce((s,b) => s + Number(b.profit), 0);
+    const staked = visibleBets.reduce((s,b) => s + Number(b.bet_amount), 0);
+    const roi = staked ? (profit/staked*100) : 0;
+    const winOdds = visibleBets.filter(b => b.result === "win").map(b => Number(b.odds));
+    const avgOdds = winOdds.length ? (winOdds.reduce((a,b)=>a+b,0)/winOdds.length) : null;
+    const periodStartBank = currentPeriod === "all" ? startBank :
+      startBank + bets.filter(b => !visibleBets.includes(b)).reduce((s,b)=>s+Number(b.profit),0);
+    const bank = periodStartBank + profit;
+
+    $("bankValue").textContent = fmt(bank) + " ₽";
+    $("statCount").textContent = total;
+    $("statWL").textContent = `${wins}W / ${loses}L`;
+    $("statWinrate").textContent = winrate.toFixed(1) + "%";
+    $("statProfit").textContent = (profit >= 0 ? "+" : "") + fmt(profit) + " ₽";
+    $("statProfit").style.color = profit >= 0 ? "var(--green)" : "var(--red)";
+    $("statROI").textContent = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
+    $("statROI").style.color = roi >= 0 ? "var(--orange)" : "var(--red)";
+    $("statAvgOdds").textContent = avgOdds ? "ср. кэф побед " + avgOdds.toFixed(2) : "ср. кэф побед —";
+    $("historyTitle").textContent = `История (${total})`;
+
+    // chart
+    const points = [periodStartBank];
+    let running = periodStartBank;
+    for(const b of visibleBets){ running += Number(b.profit); points.push(running); }
+    drawChart(points, periodStartBank);
+
+    // table
+    const tbody = $("historyBody");
+    tbody.innerHTML = "";
+    $("emptyMsg").style.display = total ? "none" : "block";
+    for(const b of [...visibleBets].reverse()){
+      const tr = document.createElement("tr");
+      const resClass = b.result === "win" ? "win" : "lose";
+      const profitSign = b.profit >= 0 ? "+" : "";
+      tr.innerHTML = `
+        <td>${b.date}</td>
+        <td>${b.event || "—"}</td>
+        <td>${fmt(b.bet_amount)} ₽</td>
+        <td>${Number(b.odds).toFixed(2)}</td>
+        <td class="${resClass}">${b.result === "win" ? "Win" : "Lose"}</td>
+        <td class="${resClass}">${profitSign}${fmt(b.profit)} ₽</td>
+        <td>${isAuthed ? `<button class="del-btn" data-id="${b.id}">✕</button>` : ""}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll(".del-btn").forEach(btn=>{
+      btn.addEventListener("click", () => deleteBet(btn.dataset.id));
+    });
+  }
+
+  let chartCoords = [];
+  let chartPoints = [];
+  const CHART_W = 600, CHART_H = 240, CHART_PAD = 30;
+
+  function drawChart(points, startBankVal){
+    const svg = $("chartSvg");
+    if(points.length < 1){ svg.innerHTML = ""; chartCoords = []; return; }
+    const min = Math.min(...points, 0);
+    const max = Math.max(...points, min + 1);
+    const range = max - min || 1;
+    const stepX = points.length > 1 ? (CHART_W - CHART_PAD*2) / (points.length - 1) : 0;
+
+    chartPoints = points;
+    chartCoords = points.map((p,i) => {
+      const x = CHART_PAD + i*stepX;
+      const y = CHART_H - CHART_PAD - ((p - min) / range) * (CHART_H - CHART_PAD*2);
+      return [x,y];
+    });
+
+    let path = "M " + chartCoords.map(c => c.join(",")).join(" L ");
+    let gridLines = "";
+    for(let i=0;i<=4;i++){
+      const y = CHART_PAD + i*(CHART_H-CHART_PAD*2)/4;
+      const val = max - i*(range/4);
+      gridLines += `<line x1="${CHART_PAD}" y1="${y}" x2="${CHART_W-CHART_PAD}" y2="${y}" stroke="#2c2350" stroke-dasharray="4,4"/>`;
+      gridLines += `<text x="2" y="${y+4}" fill="#8a8a99" font-size="11">${fmt(val)}</text>`;
+    }
+
+    const yStart = CHART_H - CHART_PAD - ((startBankVal - min) / range) * (CHART_H - CHART_PAD*2);
+    const startLine = `
+      <line x1="${CHART_PAD}" y1="${yStart}" x2="${CHART_W-CHART_PAD}" y2="${yStart}" stroke="#ffb547" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7"/>
+      <text x="${CHART_W-CHART_PAD}" y="${yStart-6}" fill="#ffb547" font-size="11" text-anchor="end">старт ${fmt(startBankVal)}</text>
+    `;
+
+    const dots = chartCoords.map(([x,y],i) => {
+      const last = i === chartCoords.length - 1;
+      return `<circle cx="${x}" cy="${y}" r="${last?6:3}" fill="${last ? '#b57dff' : '#ffb547'}"/>`;
+    }).join("");
+
+    svg.innerHTML = `
+      ${gridLines}
+      ${startLine}
+      <path d="${path}" fill="none" stroke="url(#grad)" stroke-width="2.5"/>
+      <defs>
+        <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#ffb547"/>
+          <stop offset="100%" stop-color="#b57dff"/>
+        </linearGradient>
+      </defs>
+      <g id="crosshair" style="display:none">
+        <line id="crosshairLine" x1="0" y1="${CHART_PAD}" x2="0" y2="${CHART_H-CHART_PAD}" stroke="#8a8a99" stroke-width="1" stroke-dasharray="3,3"/>
+        <circle id="crosshairDot" r="6" fill="#fff" stroke="#b57dff" stroke-width="3"/>
+      </g>
+      ${dots}
+    `;
+    hideTooltip();
+  }
+
+  function hideTooltip(){
+    $("chartTooltip").style.display = "none";
+    const ch = $("crosshair");
+    if(ch) ch.style.display = "none";
+  }
+
+  function updateTooltipAtClientX(clientX){
+    if(chartCoords.length === 0) return;
+    const svg = $("chartSvg");
+    const rect = svg.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * CHART_W;
+
+    let closest = 0, closestDist = Infinity;
+    chartCoords.forEach(([x], i) => {
+      const d = Math.abs(x - relX);
+      if(d < closestDist){ closestDist = d; closest = i; }
+    });
+
+    const [px, py] = chartCoords[closest];
+    const val = chartPoints[closest];
+
+    const line = $("crosshairLine");
+    const dot = $("crosshairDot");
+    const ch = $("crosshair");
+    if(line && dot && ch){
+      line.setAttribute("x1", px); line.setAttribute("x2", px);
+      dot.setAttribute("cx", px); dot.setAttribute("cy", py);
+      ch.style.display = "block";
+    }
+
+    const tooltip = $("chartTooltip");
+    const boxRect = svg.parentElement.getBoundingClientRect();
+    const leftPct = (px / CHART_W) * rect.width;
+    tooltip.style.left = leftPct + "px";
+    tooltip.style.top = (py / CHART_H) * rect.height + "px";
+    $("chartTooltipVal").textContent = fmt(val) + " ₽";
+    tooltip.style.display = "block";
+  }
+
+  function setupChartInteraction(){
+    const svg = $("chartSvg");
+    let active = false;
+
+    const start = (clientX) => { active = true; updateTooltipAtClientX(clientX); };
+    const move = (clientX) => { if(active) updateTooltipAtClientX(clientX); };
+    const end = () => { active = false; hideTooltip(); };
+
+    svg.addEventListener("touchstart", (e) => { start(e.touches[0].clientX); }, {passive:true});
+    svg.addEventListener("touchmove", (e) => { move(e.touches[0].clientX); }, {passive:true});
+    svg.addEventListener("touchend", end);
+
+    svg.addEventListener("mousedown", (e) => start(e.clientX));
+    svg.addEventListener("mousemove", (e) => { if(active) move(e.clientX); });
+    window.addEventListener("mouseup", end);
+    svg.addEventListener("mouseleave", () => { if(!active) hideTooltip(); });
+  }
+
+  $("addBtn").addEventListener("click", addBet);
+  $("startBank").addEventListener("change", (e) => saveStartBank(e.target.value));
+  $("fDate").value = new Date().toISOString().slice(0,10);
+
+  function applyAuthUI(){
+    $("bankInputRow").style.display = isAuthed ? "flex" : "none";
+    $("formBox").style.display = isAuthed ? "block" : "none";
+    $("authCorner").textContent = isAuthed ? "Выйти" : "Войти";
+    render();
+  }
+
+  async function checkSession(){
+    const { data } = await supa.auth.getSession();
+    isAuthed = !!data.session;
+    applyAuthUI();
+  }
+
+  $("authCorner").addEventListener("click", async () => {
+    if(isAuthed){
+      await supa.auth.signOut();
+      isAuthed = false;
+      applyAuthUI();
+    } else {
+      $("authBox").classList.toggle("open");
+    }
+  });
+
+  $("authSubmitBtn").addEventListener("click", async () => {
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+    const st = $("authStatus");
+    if(!email || !password){
+      st.className = "status error"; st.textContent = "Введите email и пароль"; return;
+    }
+    const { error } = await supa.auth.signInWithPassword({ email, password });
+    if(error){
+      st.className = "status error"; st.textContent = "Ошибка входа: " + error.message;
+      return;
+    }
+    st.className = "status"; 
+    isAuthed = true;
+    $("authBox").classList.remove("open");
+    applyAuthUI();
+  });
+
+  document.querySelectorAll(".period-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".period-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentPeriod = btn.dataset.period;
+      render();
+    });
+  });
+
+  // === Навигация между страницами ===
+  $("calendarNavBtn").addEventListener("click", ()=>{
+    $("mainPage").style.display = "none";
+    $("calendarPage").style.display = "block";
+    renderCalendar();
+    renderStreaks();
+    populateShareBetSelect();
+  });
+  $("backBtn").addEventListener("click", ()=>{
+    $("calendarPage").style.display = "none";
+    $("mainPage").style.display = "block";
+  });
+
+  // === Календарь прибыльности ===
+  const MONTH_NAMES = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+  const DOW = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+  function renderCalendar(){
+    $("monthLabel").textContent = MONTH_NAMES[calMonth] + " " + calYear;
+    const grid = $("calGrid");
+    grid.innerHTML = "";
+    DOW.forEach(d => {
+      const el = document.createElement("div");
+      el.className = "cal-dow";
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+
+    const firstDay = new Date(calYear, calMonth, 1);
+    let startOffset = firstDay.getDay() - 1;
+    if(startOffset < 0) startOffset = 6;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    const dayProfits = {};
+    bets.forEach(b => {
+      const [y, m, d] = b.date.split("-").map(Number);
+      if(y === calYear && (m-1) === calMonth){
+        dayProfits[d] = (dayProfits[d] || 0) + Number(b.profit);
+      }
+    });
+
+    for(let i=0;i<startOffset;i++){
+      const el = document.createElement("div");
+      el.className = "cal-cell empty";
+      grid.appendChild(el);
+    }
+    for(let day=1; day<=daysInMonth; day++){
+      const el = document.createElement("div");
+      const p = dayProfits[day];
+      el.className = "cal-cell" + (p === undefined ? "" : p >= 0 ? " win" : " lose");
+      const sumText = p === undefined ? "" : `<div class="cal-sum">${p>=0?"+":""}${fmt(p)}</div>`;
+      el.innerHTML = `<div class="cal-day">${day}</div>${sumText}`;
+      grid.appendChild(el);
+    }
+  }
+
+  $("prevMonthBtn").addEventListener("click", ()=>{
+    calMonth--;
+    if(calMonth < 0){ calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  $("nextMonthBtn").addEventListener("click", ()=>{
+    calMonth++;
+    if(calMonth > 11){ calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  // === Win/Lose streaks ===
+  function renderStreaks(){
+    const sorted = [...bets].sort((a,b)=> a.date.localeCompare(b.date) || (a.created_at||"").localeCompare(b.created_at||""));
+    let maxWin = 0, maxLose = 0, curWin = 0, curLose = 0;
+    for(const b of sorted){
+      if(b.result === "win"){ curWin++; curLose = 0; }
+      else { curLose++; curWin = 0; }
+      if(curWin > maxWin) maxWin = curWin;
+      if(curLose > maxLose) maxLose = curLose;
+    }
+    $("maxWinStreak").textContent = maxWin;
+    $("maxLoseStreak").textContent = maxLose;
+  }
+
+  // === Карточка для шеринга ===
+  document.querySelectorAll(".share-tab").forEach(tab=>{
+    tab.addEventListener("click", ()=>{
+      document.querySelectorAll(".share-tab").forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      shareMode = tab.dataset.mode;
+      $("shareBetSelect").style.display = shareMode === "bet" ? "block" : "none";
+      $("sharePreview").style.display = "none";
+      $("shareActions").style.display = "none";
+    });
+  });
+
+  function populateShareBetSelect(){
+    const sel = $("shareBetSelect");
+    sel.innerHTML = "";
+    [...bets].reverse().forEach(b=>{
+      const opt = document.createElement("option");
+      opt.value = b.id;
+      opt.textContent = `${b.date} · ${b.event || "ставка"} · ${b.result === "win" ? "+" : ""}${fmt(b.profit)} ₽`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function smoothPath(ctx, pts){
+    if(pts.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for(let i=0;i<pts.length-1;i++){
+      const [x0,y0] = pts[i];
+      const [x1,y1] = pts[i+1];
+      const cx = (x0+x1)/2;
+      ctx.quadraticCurveTo(x0, y0, cx, (y0+y1)/2);
+    }
+    ctx.lineTo(pts[pts.length-1][0], pts[pts.length-1][1]);
+    ctx.stroke();
+  }
+
+  function buildCardData(){
+    if(shareMode === "bet"){
+      const id = $("shareBetSelect").value;
+      const b = bets.find(x => x.id === id);
+      if(!b) return null;
+      return {
+        type: "bet",
+        title: b.event || "Ставка",
+        period: b.date,
+        profit: Number(b.profit),
+        extra: [`Ставка: ${fmt(b.bet_amount)} ₽`, `Кэф: ${Number(b.odds).toFixed(2)}`, `Результат: ${b.result === "win" ? "Win" : "Lose"}`]
+      };
+    }
+
+    let list, label;
+    if(shareMode === "week"){
+      list = filterByPeriod(bets, "7d");
+      label = "Результат за неделю";
+    } else {
+      list = bets.filter(b=>{
+        const [y, m] = b.date.split("-").map(Number);
+        return y === calYear && (m-1) === calMonth;
+      });
+      label = MONTH_NAMES[calMonth] + " " + calYear;
+    }
+
+    const profit = list.reduce((s,b)=>s+Number(b.profit),0);
+    const staked = list.reduce((s,b)=>s+Number(b.bet_amount),0);
+    const roi = staked ? (profit/staked*100) : 0;
+    const wins = list.filter(b=>b.result==="win").length;
+    const winrate = list.length ? (wins/list.length*100) : 0;
+
+    let running = 0;
+    const points = [0];
+    for(const b of list){ running += Number(b.profit); points.push(running); }
+
+    return {
+      type: "period",
+      title: label,
+      profit, roi, winrate, count: list.length,
+      points
+    };
+  }
+
+  function drawShareCard(data){
+    const canvas = $("shareCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    const isPositive = data.profit >= 0;
+    const accent = isPositive ? "#3ddc84" : "#ff5c5c";
+
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0, "#1a1520");
+    bg.addColorStop(1, "#0d0a12");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.fillStyle = "#b9aec2";
+    ctx.font = "500 32px -apple-system, sans-serif";
+    ctx.fillText(data.title, 70, 130);
+
+    ctx.fillStyle = accent;
+    ctx.font = "800 130px -apple-system, sans-serif";
+    const profitText = (isPositive?"+":"") + fmt(data.profit) + " ₽";
+    ctx.fillText(profitText, 70, 290);
+
+    if(data.type === "period"){
+      ctx.fillStyle = "#8a7f95";
+      ctx.font = "500 30px -apple-system, sans-serif";
+      ctx.fillText(`ROI ${data.roi>=0?"+":""}${data.roi.toFixed(1)}%   ·   Винрейт ${data.winrate.toFixed(1)}%   ·   ${data.count} ставок`, 70, 350);
+
+      // smooth chart
+      if(data.points.length > 1){
+        const chartTop = 480, chartBottom = 900, chartLeft = 70, chartRight = W-70;
+        const min = Math.min(...data.points);
+        const max = Math.max(...data.points);
+        const range = (max-min) || 1;
+        const stepX = (chartRight-chartLeft) / (data.points.length-1);
+        const pts = data.points.map((p,i)=>[
+          chartLeft + i*stepX,
+          chartBottom - ((p-min)/range)*(chartBottom-chartTop)
+        ]);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 8;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        smoothPath(ctx, pts);
+      }
+    } else {
+      ctx.fillStyle = "#8a7f95";
+      ctx.font = "500 30px -apple-system, sans-serif";
+      let y = 360;
+      (data.extra||[]).forEach(line=>{
+        ctx.fillText(line, 70, y);
+        y += 48;
+      });
+    }
+
+    ctx.fillStyle = "#5c5468";
+    ctx.font = "600 28px -apple-system, sans-serif";
+    ctx.fillText("betlytics.online", 70, H-60);
+  }
+
+  $("generateCardBtn").addEventListener("click", async ()=>{
+    const data = buildCardData();
+    if(!data){
+      alert("Нет данных для карточки за выбранный период");
+      return;
+    }
+    drawShareCard(data);
+    const canvas = $("shareCanvas");
+    const dataUrl = canvas.toDataURL("image/png");
+    $("sharePreview").src = dataUrl;
+    $("sharePreview").style.display = "block";
+    $("shareActions").style.display = "flex";
+  });
+
+  $("shareDlBtn").addEventListener("click", ()=>{
+    const a = document.createElement("a");
+    a.href = $("shareCanvas").toDataURL("image/png");
+    a.download = "betlytics-result.png";
+    a.click();
+  });
+
+  $("shareSendBtn").addEventListener("click", async ()=>{
+    const canvas = $("shareCanvas");
+    canvas.toBlob(async (blob)=>{
+      const file = new File([blob], "betlytics-result.png", { type: "image/png" });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        try{
+          await navigator.share({ files: [file], title: "Мой результат" });
+        }catch(e){ /* пользователь отменил */ }
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "betlytics-result.png";
+        a.click();
+      }
+    }, "image/png");
+  });
+
+  (async function init(){
+    setupChartInteraction();
+    await checkSession();
+    await loadStartBank();
+    await loadBets();
+  })();
+</script>
+</body>
+</html>
