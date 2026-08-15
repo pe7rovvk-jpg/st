@@ -874,47 +874,35 @@
   BURJ_IMG.onload = () => { burjLoaded = true; };
 
   function drawCardBackground(ctx, W, H, accentRgb){
-    // базовый градиент
-    const grad = ctx.createLinearGradient(0,0,0,750);
-    for(let i=0;i<=1;i+=0.1){
-      const r = Math.round(14 + accentRgb[0]*0.13*(1-i));
-      const g = Math.round(10 + accentRgb[1]*0.13*(1-i));
-      const b = Math.round(24 + accentRgb[2]*0.13*(1-i));
-      grad.addColorStop(i, `rgb(${r},${g},${b})`);
-    }
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,750);
-    ctx.fillStyle = "#0c0916";
-    ctx.fillRect(0,750,W,H-750);
+    // чисто тёмное небо, без цветных оттенков
+    ctx.fillStyle = "#0a0812";
+    ctx.fillRect(0,0,W,H);
 
-    // фото Бурдж-Халифы с плавным затуханием краёв
+    // фото Бурдж-Халифы — растягиваем на ВСЮ карточку (object-fit: cover)
     if(burjLoaded){
-      const targetH = 950;
-      const scale = targetH / BURJ_IMG.naturalHeight;
-      const targetW = Math.round(BURJ_IMG.naturalWidth * scale);
-      const off = document.createElement("canvas");
-      off.width = targetW; off.height = targetH;
-      const octx = off.getContext("2d");
-      octx.drawImage(BURJ_IMG, 0, 0, targetW, targetH);
-      const imgData = octx.getImageData(0,0,targetW,targetH);
-      const d = imgData.data;
-      for(let y=0;y<targetH;y++){
-        const fy = y/targetH;
-        let aBottom = 255;
-        if(fy > 0.82) aBottom = Math.max(0, 255*(1-(fy-0.82)/0.18));
-        for(let x=0;x<targetW;x++){
-          const fx = x/targetW;
-          let aLeft = 255;
-          if(fx < 0.12) aLeft = 255*(fx/0.12);
-          const idx = (y*targetW+x)*4+3;
-          const a = Math.min(aBottom, aLeft);
-          d[idx] = Math.round((d[idx]/255)*a);
-        }
-      }
-      octx.putImageData(imgData, 0, 0);
-      const pasteX = W - targetW - 30;
-      const pasteY = 480;
-      ctx.drawImage(off, pasteX, pasteY);
+      const iw = BURJ_IMG.naturalWidth, ih = BURJ_IMG.naturalHeight;
+      const scale = Math.max(W/iw, H/ih);
+      const drawW = iw*scale, drawH = ih*scale;
+      const dx = (W-drawW)/2;
+      const dy = (H-drawH)/2;
+      ctx.drawImage(BURJ_IMG, dx, dy, drawW, drawH);
+
+      // лёгкое затемнение по всей карточке, чтобы текст и карточки статистики читались
+      ctx.fillStyle = "rgba(8,6,16,0.38)";
+      ctx.fillRect(0,0,W,H);
+
+      // усиленное затемнение сверху (под заголовок/сумму) и снизу (под статистику)
+      const topGrad = ctx.createLinearGradient(0,0,0,420);
+      topGrad.addColorStop(0, "rgba(6,4,12,0.6)");
+      topGrad.addColorStop(1, "rgba(6,4,12,0)");
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0,0,W,420);
+
+      const botGrad = ctx.createLinearGradient(0,920,0,H);
+      botGrad.addColorStop(0, "rgba(6,4,12,0)");
+      botGrad.addColorStop(1, "rgba(6,4,12,0.55)");
+      ctx.fillStyle = botGrad;
+      ctx.fillRect(0,920,W,H-920);
 
       // звёзды: сэмплируем тёмные пиксели в верхней части карточки
       const sample = ctx.getImageData(0,0,W,830);
@@ -1029,7 +1017,7 @@
         ctx.lineTo(chartRight, chartBottom+40);
         ctx.lineTo(chartLeft, chartBottom+40);
         ctx.closePath();
-        ctx.fillStyle = isPositive ? "rgba(61,220,132,0.22)" : "rgba(255,92,92,0.22)";
+        ctx.fillStyle = isPositive ? "rgba(61,220,132,0.24)" : "rgba(255,92,92,0.24)";
         ctx.fill();
 
         ctx.strokeStyle = accentHex;
