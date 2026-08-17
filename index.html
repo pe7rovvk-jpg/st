@@ -255,6 +255,7 @@
 
   <div class="period-row" id="periodRow">
     <button class="period-btn" data-period="7d">7Д</button>
+    <button class="period-btn" data-period="25b">25 ст.</button>
     <button class="period-btn" data-period="1m">1М</button>
     <button class="period-btn" data-period="3m">3М</button>
     <button class="period-btn" data-period="1y">1Г</button>
@@ -464,6 +465,7 @@
 
   function filterByPeriod(list, period){
     if(period === "all") return list;
+    if(period === "25b") return list.slice(-25);
     const now = new Date();
     let cutoff = new Date(now);
     if(period === "7d") cutoff.setDate(now.getDate() - 6);
